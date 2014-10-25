@@ -23,6 +23,7 @@ public class ImageDisplay extends JFrame {
     private final JButton next;
     private final JButton undo;
     private final JButton gradient;
+    private final JButton stats;
     JButton load;
 
     Stack<MyMatrix> stack = new Stack<>();
@@ -63,6 +64,7 @@ public class ImageDisplay extends JFrame {
         smooth = new JButton("Smooth");
         thin = new JButton("Thin");
         gradient = new JButton("Gradient");
+        stats = new JButton("Stats");
         undo = new JButton("Undo");
 
         DrawPanel panel = new DrawPanel();
@@ -77,6 +79,7 @@ public class ImageDisplay extends JFrame {
         smooth.addActionListener(panel);
         thin.addActionListener(panel);
         gradient.addActionListener(panel);
+        stats.addActionListener(panel);
         undo.addActionListener(panel);
 
         upperPanel = new JPanel();
@@ -93,6 +96,7 @@ public class ImageDisplay extends JFrame {
         upperPanel.add(smooth);
         upperPanel.add(thin);
         upperPanel.add(gradient);
+        upperPanel.add(stats);
         upperPanel.add(undo);
 
         add(upperPanel, BorderLayout.NORTH);
@@ -122,6 +126,7 @@ public class ImageDisplay extends JFrame {
                     }
                     matrix = new MyMatrix(ImageOperations.readTextFile(chooser.getSelectedFile().getAbsolutePath()), "pattern1.txt");
                     matrix.print();
+                    ImageUtils.showStats(matrix);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -132,6 +137,7 @@ public class ImageDisplay extends JFrame {
                 matrix = ImageUtils.get_MNIST_data(current, reader);
                 matrix.binarize();
                 matrix.print();
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Next")) {
                 if (current < reader.getNumOfImages() - 1) {
                     current++;
@@ -139,27 +145,36 @@ public class ImageDisplay extends JFrame {
                 matrix = ImageUtils.get_MNIST_data(current, reader);
                 matrix.binarize();
                 matrix.print();
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Binarize")) {
                 matrix.binarize();
                 matrix.print();
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Invert")) {
                 matrix = ImageUtils.invert(matrix);
-            } else if (e.getActionCommand().equals("Invert")) {
-                matrix = ImageUtils.invert(matrix);
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Normalize")) {
                 matrix = ImageUtils.normalize(matrix);
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Denoise")) {
                 matrix = ImageUtils.binarySmooth(matrix);
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Smooth")) {
                 ImageUtils.smooth(matrix);
                 matrix.binarize();
                 matrix.print();
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Thin")) {
                 matrix = ImageUtils.thinning(matrix);
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Deslant")) {
                 matrix = ImageUtils.correctSlant(matrix);
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Gradient")) {
                 matrix = ImageUtils.gradient(matrix);
+                ImageUtils.showStats(matrix);
+            } else if (e.getActionCommand().equals("Stats")) {
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Undo")) {
 
                 if ( !stack.empty()) {

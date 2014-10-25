@@ -1,6 +1,19 @@
 import MNIST.MNISTReader;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.statistics.SimpleHistogramBin;
+import org.jfree.data.statistics.SimpleHistogramDataset;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
+import javax.swing.*;
 import java.awt.*;
 import java.text.DecimalFormat;
 
@@ -18,6 +31,9 @@ public class ImageUtils {
     static final public int FRAME_COEFFICIENT_1 = 1;
 
     private static boolean printAfterOperation;
+    private static JFrame crossingsPane = null;
+    private static JFrame projPane;
+    private static JFrame profilePane;
 
     public static void smooth(MyMatrix matrix) {
         MyMatrix mask = new MyMatrix(3, 3, 1, "mask");
@@ -427,7 +443,7 @@ public class ImageUtils {
 
     public static MyMatrix binarySmooth(MyMatrix matrix) {
 
-        MyMatrix smoothed = BinarySmooth.binarySmooth(matrix);
+        MyMatrix smoothed = Denoise.binarySmooth(matrix);
 
         if (printAfterOperation) {
             smoothed.print();
@@ -529,5 +545,151 @@ public class ImageUtils {
         char label = reader.getLabel(i);
 
         return new MyMatrix(reader.getNumOfRows(), reader.getNumOfCols(), values, Character.toString(label));
+    }
+
+    public static void showStats(MyMatrix matrix) {
+        Crossings crossings = new Crossings(matrix, "Crossings");
+        crossings.print();
+        ProjectionHistogram projectionHistogram = new ProjectionHistogram(matrix, "Projections");
+        projectionHistogram.print();
+        Profiles profiles = new Profiles(matrix, "Profiles");
+        profiles.print();
+
+        XYSeriesCollection dataset = getXySeriesCollection(getXySeries(crossings.getHorizontal()), getXySeries(crossings.getVertical()));
+        JFreeChart chart = createChart(dataset, crossings.getTitle());
+        ChartPanel crossingsPanel = new ChartPanel(chart);
+        crossingsPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+
+        dataset = getXySeriesCollection(getXySeries(projectionHistogram.getHorizontal()), getXySeries(projectionHistogram.getVertical()));
+        chart = createChart(dataset, projectionHistogram.getTitle());
+        ChartPanel projPanel = new ChartPanel(chart);
+        projPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+
+        dataset = getXySeriesCollection(getXySeries(profiles.getUpper()),
+                getXySeries(profiles.getLower()),
+                getXySeries(profiles.getLeft()),
+                getXySeries(profiles.getRight()));
+        chart = createChart(dataset, profiles.getTitle());
+        ChartPanel profilePanel = new ChartPanel(chart);
+        profilePanel.setPreferredSize(new java.awt.Dimension(500, 270));
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                if (crossingsPane == null) {
+                    crossingsPane = new JFrame("Crossings");
+                    crossingsPane.setSize(600, 400);
+                    crossingsPane.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                }
+                if (projPane == null) {
+                    projPane = new JFrame("Projections");
+                    projPane.setSize(600, 400);
+                    projPane.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                }
+                if (profilePane == null) {
+                    profilePane = new JFrame("Profiles");
+                    profilePane.setSize(600, 400);
+                    profilePane.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                }
+                crossingsPane.setVisible(true);
+                crossingsPane.getContentPane().add(crossingsPanel);
+
+                projPane.setVisible(true);
+                projPane.getContentPane().add(projPanel);
+
+                profilePane.setVisible(true);
+                profilePane.getContentPane().add(profilePanel);
+            }
+        });
+    }
+
+    private static XYSeriesCollection getXySeriesCollection(XYSeries... series) {
+        final XYSeriesCollection dataset = new XYSeriesCollection();
+        for (XYSeries s : series) {
+            dataset.addSeries(s);
+        }
+        return dataset;
+    }
+
+    private static XYSeries getXySeries(Histogram histogram) {
+        final XYSeries series = new XYSeries(histogram.getTitle());
+        int[] values = histogram.getHistogram();
+        for (int i = 0; i < values.length; i++) {
+            series.add(i, values[i]);
+        }
+        return series;
+    }
+
+    /**
+     * Creates a chart.
+     *
+     * @param dataset the data for the chart.
+     * @return a chart.
+     */
+    private static JFreeChart createChart(final XYDataset dataset, String title) {
+
+        // create the chart...
+        final JFreeChart chart = ChartFactory.createXYLineChart(
+                title,      // chart title
+                "pixel",                      // x axis label
+                "frequency",                      // y axis label
+                dataset,                  // data
+                PlotOrientation.VERTICAL,
+                true,                     // include legend
+                true,                     // tooltips
+                false                     // urls
+        );
+
+        // NOW DO SOME OPTIONAL CUSTOMISATION OF THE CHART...
+        chart.setBackgroundPaint(Color.white);
+
+
+        // get a reference to the plot for further customisation...
+        final XYPlot plot = chart.getXYPlot();
+        plot.setBackgroundPaint(Color.lightGray);
+        //    plot.setAxisOffset(new Spacer(Spacer.ABSOLUTE, 5.0, 5.0, 5.0, 5.0));
+        plot.setDomainGridlinePaint(Color.white);
+        plot.setRangeGridlinePaint(Color.white);
+
+        final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        plot.setRenderer(renderer);
+
+        // change the auto tick unit selection to integer units only...
+        final NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        // OPTIONAL CUSTOMISATION COMPLETED.
+
+        return chart;
+
+    }
+
+    public static void showStat(String title, Histogram histogram) {
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                JFrame frame = new JFrame("Charts");
+
+                frame.setSize(600, 400);
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                frame.setVisible(true);
+
+                SimpleHistogramDataset hist = new SimpleHistogramDataset(histogram.getTitle());
+
+                int[] values = histogram.getHistogram();
+                for (int i = 0; i < values.length; i++) {
+                    hist.addBin(new SimpleHistogramBin(i, i + 1, true, false));
+
+                    for (int j = 0; j < values[i]; j++) {
+                        hist.addObservation(i);
+                    }
+                }
+                JFreeChart chart = ChartFactory.createXYLineChart(histogram.getTitle(),
+                        "pixel", "frequency", hist, PlotOrientation.VERTICAL, true, true,
+                        false);
+
+                ChartPanel cp = new ChartPanel(chart);
+
+                frame.getContentPane().add(cp);
+            }
+        });
     }
 }
