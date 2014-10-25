@@ -15,7 +15,7 @@ public class ImageDisplay extends JFrame {
     private final JButton invert;
     private final JButton normalize;
     private final JButton binarize;
-    private final JButton binSmooth;
+    private final JButton denoise;
     private final JButton deslant;
     private final JButton smooth;
     private final JButton thin;
@@ -58,7 +58,7 @@ public class ImageDisplay extends JFrame {
         invert = new JButton("Invert");
         normalize = new JButton("Normalize");
         binarize = new JButton("Binarize");
-        binSmooth = new JButton("BinSmooth");
+        denoise = new JButton("Denoise");
         deslant = new JButton("Deslant");
         smooth = new JButton("Smooth");
         thin = new JButton("Thin");
@@ -72,7 +72,7 @@ public class ImageDisplay extends JFrame {
         next.addActionListener(panel);
         normalize.addActionListener(panel);
         invert.addActionListener(panel);
-        binSmooth.addActionListener(panel);
+        denoise.addActionListener(panel);
         deslant.addActionListener(panel);
         smooth.addActionListener(panel);
         thin.addActionListener(panel);
@@ -88,7 +88,7 @@ public class ImageDisplay extends JFrame {
         upperPanel.add(binarize);
         upperPanel.add(invert);
         upperPanel.add(normalize);
-        upperPanel.add(binSmooth);
+        upperPanel.add(denoise);
         upperPanel.add(deslant);
         upperPanel.add(smooth);
         upperPanel.add(thin);
@@ -148,7 +148,7 @@ public class ImageDisplay extends JFrame {
                 matrix = ImageUtils.invert(matrix);
             } else if (e.getActionCommand().equals("Normalize")) {
                 matrix = ImageUtils.normalize(matrix);
-            } else if (e.getActionCommand().equals("BinSmooth")) {
+            } else if (e.getActionCommand().equals("Denoise")) {
                 matrix = ImageUtils.binarySmooth(matrix);
             } else if (e.getActionCommand().equals("Smooth")) {
                 ImageUtils.smooth(matrix);
