@@ -1,4 +1,5 @@
 import MNIST.MNISTReader;
+import org.apache.commons.lang.StringUtils;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -24,6 +25,7 @@ public class ImageDisplay extends JFrame {
     private final JButton undo;
     private final JButton gradient;
     private final JButton stats;
+    private final JTextField normPlane;
     JButton load;
 
     Stack<MyMatrix> stack = new Stack<>();
@@ -58,6 +60,7 @@ public class ImageDisplay extends JFrame {
         next = new JButton("Next");
         invert = new JButton("Invert");
         normalize = new JButton("Normalize");
+        normPlane = new JTextField("16",3);
         binarize = new JButton("Binarize");
         denoise = new JButton("Denoise");
         deslant = new JButton("Deslant");
@@ -91,6 +94,7 @@ public class ImageDisplay extends JFrame {
         upperPanel.add(binarize);
         upperPanel.add(invert);
         upperPanel.add(normalize);
+        upperPanel.add(normPlane);
         upperPanel.add(denoise);
         upperPanel.add(deslant);
         upperPanel.add(smooth);
@@ -154,7 +158,8 @@ public class ImageDisplay extends JFrame {
                 matrix = ImageUtils.invert(matrix);
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Normalize")) {
-                matrix = ImageUtils.normalize(matrix);
+                matrix = ImageUtils.normalize(matrix,
+                        Integer.parseInt(StringUtils.defaultString(normPlane.getText(), "16")));
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Denoise")) {
                 matrix = ImageUtils.binarySmooth(matrix);

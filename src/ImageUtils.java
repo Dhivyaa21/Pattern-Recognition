@@ -34,6 +34,9 @@ public class ImageUtils {
     private static JFrame crossingsPane = null;
     private static JFrame projPane;
     private static JFrame profilePane;
+    private static ChartPanel crossingsPanel;
+    private static ChartPanel projPanel;
+    private static ChartPanel profilePanel;
 
     public static void smooth(MyMatrix matrix) {
         MyMatrix mask = new MyMatrix(3, 3, 1, "mask");
@@ -462,34 +465,37 @@ public class ImageUtils {
 
     public static MyMatrix gradient(MyMatrix matrix) {
 
+        MyMatrix gradientMaxtrix = new MyMatrix(matrix.numRows(), matrix.numCols(), 0, matrix.getName());
         MyMatrix base = matrix.clone();
         base.makeBorder(1, 1);
-        MyMatrix gradient = new MyMatrix(matrix.numRows(), matrix.numCols(), 0, matrix.getName());
 
-        double[][] d = gradient.getMatrix();
+        double[][] g = gradientMaxtrix.getMatrix();
         double[][] s = base.getMatrix();
-        for (int y = 1; y <= matrix.numRows(); y++) {
-            for (int x = 1; x <= matrix.numCols(); x++) {
+        for (int y = 0; y < matrix.numRows(); y++) {
+            for (int x = 0; x < matrix.numCols(); x++) {
 
-                double alpha = Math.atan2(gy(s, x, y), gx(s, x, y));
-                if (alpha < 0) {
-                    alpha += 2 * Math.PI;
-                }
+                if (s[y + 1][x + 1] == 1) {
+                    //  +1 to compensate for border
+                    double alpha = Math.atan2(gy(s, x + 1, y + 1), gx(s, x + 1, y + 1));
+                    if (alpha < 0) {
+                        alpha += 2 * Math.PI;
+                    }
 //                double alpha = Math.atan(gy(s, x, y)/ gx(s, x, y));
-                double degrees = alpha * 180 / Math.PI;
-//				System.out.println(degrees);
-//				System.out.println(alpha);
-                d[y - 1][x - 1] = Math.round(alpha / (2 * Math.PI) * 8);
-//                d[y - 1][x - 1] = alpha;
-//				d[y - 1][x - 1] = Math.round(degrees);
+//                double degrees = alpha * 180 / Math.PI;
+                    if (alpha >= Math.PI) {
+                        alpha -= Math.PI;
+                    }
+
+                    g[y][x] = (Math.round(alpha / Math.PI * 4) % 4) + 1; // range:[1,4]
+                }
             }
         }
 
         if (printAfterOperation) {
-            gradient.print();
+            gradientMaxtrix.print();
         }
 
-        return gradient;
+        return gradientMaxtrix;
     }
 
     //  Version from LAB 6 slides
@@ -549,29 +555,40 @@ public class ImageUtils {
 
     public static void showStats(MyMatrix matrix) {
         Crossings crossings = new Crossings(matrix, "Crossings");
-        crossings.print();
+//        crossings.print();
         ProjectionHistogram projectionHistogram = new ProjectionHistogram(matrix, "Projections");
-        projectionHistogram.print();
+//        projectionHistogram.print();
         Profiles profiles = new Profiles(matrix, "Profiles");
-        profiles.print();
+//        profiles.print();
 
         XYSeriesCollection dataset = getXySeriesCollection(getXySeries(crossings.getHorizontal()), getXySeries(crossings.getVertical()));
         JFreeChart chart = createChart(dataset, crossings.getTitle());
-        ChartPanel crossingsPanel = new ChartPanel(chart);
-        crossingsPanel.setPreferredSize(new java.awt.Dimension(500, 270));
-
+        if (crossingsPanel == null) {
+            crossingsPanel = new ChartPanel(chart);
+            crossingsPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+        } else {
+            crossingsPanel.setChart(chart);
+        }
         dataset = getXySeriesCollection(getXySeries(projectionHistogram.getHorizontal()), getXySeries(projectionHistogram.getVertical()));
         chart = createChart(dataset, projectionHistogram.getTitle());
-        ChartPanel projPanel = new ChartPanel(chart);
-        projPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+        if (projPanel == null) {
+            projPanel = new ChartPanel(chart);
+            projPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+        } else {
+            projPanel.setChart(chart);
+        }
 
         dataset = getXySeriesCollection(getXySeries(profiles.getUpper()),
                 getXySeries(profiles.getLower()),
                 getXySeries(profiles.getLeft()),
                 getXySeries(profiles.getRight()));
         chart = createChart(dataset, profiles.getTitle());
-        ChartPanel profilePanel = new ChartPanel(chart);
-        profilePanel.setPreferredSize(new java.awt.Dimension(500, 270));
+        if (profilePanel == null) {
+            profilePanel = new ChartPanel(chart);
+            profilePanel.setPreferredSize(new java.awt.Dimension(500, 270));
+        } else {
+            projPanel.setChart(chart);
+        }
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -579,25 +596,25 @@ public class ImageUtils {
                     crossingsPane = new JFrame("Crossings");
                     crossingsPane.setSize(600, 400);
                     crossingsPane.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                    crossingsPane.getContentPane().add(crossingsPanel);
                 }
+                crossingsPane.setVisible(true);
+
                 if (projPane == null) {
                     projPane = new JFrame("Projections");
                     projPane.setSize(600, 400);
                     projPane.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                    projPane.getContentPane().add(projPanel);
                 }
+                projPane.setVisible(true);
+
                 if (profilePane == null) {
                     profilePane = new JFrame("Profiles");
                     profilePane.setSize(600, 400);
                     profilePane.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                    profilePane.getContentPane().add(profilePanel);
                 }
-                crossingsPane.setVisible(true);
-                crossingsPane.getContentPane().add(crossingsPanel);
-
-                projPane.setVisible(true);
-                projPane.getContentPane().add(projPanel);
-
                 profilePane.setVisible(true);
-                profilePane.getContentPane().add(profilePanel);
             }
         });
     }
@@ -630,7 +647,7 @@ public class ImageUtils {
         // create the chart...
         final JFreeChart chart = ChartFactory.createXYLineChart(
                 title,      // chart title
-                "pixel",                      // x axis label
+                "level",                      // x axis label
                 "frequency",                      // y axis label
                 dataset,                  // data
                 PlotOrientation.VERTICAL,
@@ -683,7 +700,7 @@ public class ImageUtils {
                     }
                 }
                 JFreeChart chart = ChartFactory.createXYLineChart(histogram.getTitle(),
-                        "pixel", "frequency", hist, PlotOrientation.VERTICAL, true, true,
+                        "level", "frequency", hist, PlotOrientation.VERTICAL, true, true,
                         false);
 
                 ChartPanel cp = new ChartPanel(chart);
