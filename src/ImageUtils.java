@@ -446,7 +446,7 @@ public class ImageUtils {
         return p;
     }
 
-    public static MyMatrix binarySmooth(MyMatrix matrix) {
+    public static MyMatrix denoise(MyMatrix matrix) {
 
         MyMatrix smoothed = Denoise.binarySmooth(matrix);
 
@@ -589,7 +589,7 @@ public class ImageUtils {
             profilePanel = new ChartPanel(chart);
             profilePanel.setPreferredSize(new java.awt.Dimension(500, 270));
         } else {
-            projPanel.setChart(chart);
+            profilePanel.setChart(chart);
         }
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -719,8 +719,27 @@ public class ImageUtils {
         double[][] m = matrix.getMatrix();
         for (int y = 0; y < matrix.numRows(); y++) {
             for (int x = 0; x < matrix.numCols(); x++) {
-                if ( m[y][x] == 1 && calculateB(calculatePs(m, x, y)) == 1 ) {
-                    list.add(new Point(x,y));
+                if (m[y][x] == 1 && calculateB(calculatePs(m, x, y)) == 1) {
+                    list.add(new Point(x, y));
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public static List<Point> findCrossings(MyMatrix matrix) {
+
+        ArrayList<Point> list = new ArrayList<Point>();
+
+        double[][] m = matrix.getMatrix();
+        for (int y = 0; y < matrix.numRows(); y++) {
+            for (int x = 0; x < matrix.numCols(); x++) {
+                if (m[y][x] == 1) {
+                    int a = calculateA(calculatePs(m, x, y));
+                    if (3 <= a && a <= 4) {
+                        list.add(new Point(x, y));
+                    }
                 }
             }
         }

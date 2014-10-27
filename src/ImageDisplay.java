@@ -9,8 +9,8 @@ import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.Stack;
 
 
 public class ImageDisplay extends JFrame {
@@ -28,6 +28,7 @@ public class ImageDisplay extends JFrame {
     private final JButton gradient;
     private final JButton stats;
     private final JTextField normPlane;
+    private final JButton process;
     JButton load;
 
     Stack<MyMatrix> stack = new Stack<>();
@@ -40,7 +41,7 @@ public class ImageDisplay extends JFrame {
 
     public static void main(String[] args) {
 
-        if ( args.length != 2 ) {
+        if (args.length != 2) {
             System.err.println("Call with MNIST data and label files");
             System.exit(1);
         }
@@ -62,13 +63,14 @@ public class ImageDisplay extends JFrame {
         next = new JButton("Next");
         invert = new JButton("Invert");
         normalize = new JButton("Normalize");
-        normPlane = new JTextField("16",3);
+        normPlane = new JTextField("16", 3);
         binarize = new JButton("Binarize");
         denoise = new JButton("Denoise");
         deslant = new JButton("Deslant");
         smooth = new JButton("Smooth");
         thin = new JButton("Thin");
         gradient = new JButton("Gradient");
+        process = new JButton("Process");
         stats = new JButton("Stats");
         undo = new JButton("Undo");
 
@@ -84,6 +86,7 @@ public class ImageDisplay extends JFrame {
         smooth.addActionListener(panel);
         thin.addActionListener(panel);
         gradient.addActionListener(panel);
+        process.addActionListener(panel);
         stats.addActionListener(panel);
         undo.addActionListener(panel);
 
@@ -102,6 +105,7 @@ public class ImageDisplay extends JFrame {
         upperPanel.add(smooth);
         upperPanel.add(thin);
         upperPanel.add(gradient);
+        upperPanel.add(process);
         upperPanel.add(stats);
         upperPanel.add(undo);
 
@@ -114,11 +118,13 @@ public class ImageDisplay extends JFrame {
     private class DrawPanel extends JPanel implements ActionListener {
 
         private List<Point> endPoints;
+        private List<Point> crossings;
 
         public void actionPerformed(ActionEvent e) {
             endPoints = null;
+            crossings = null;
 
-            if ( matrix != null && !e.getActionCommand().equals("Undo")) {
+            if (matrix != null && !e.getActionCommand().equals("Undo")) {
                 stack.push(matrix.clone());
             }
 
@@ -167,7 +173,7 @@ public class ImageDisplay extends JFrame {
                         Integer.parseInt(StringUtils.defaultString(normPlane.getText(), "16")));
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Denoise")) {
-                matrix = ImageUtils.binarySmooth(matrix);
+                matrix = ImageUtils.denoise(matrix);
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Smooth")) {
                 ImageUtils.smooth(matrix);
@@ -177,6 +183,7 @@ public class ImageDisplay extends JFrame {
             } else if (e.getActionCommand().equals("Thin")) {
                 matrix = ImageUtils.thinning(matrix);
                 endPoints = ImageUtils.findEndpoints(matrix);
+                crossings = ImageUtils.findCrossings(matrix);
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Deslant")) {
                 matrix = ImageUtils.correctSlant(matrix);
@@ -184,11 +191,22 @@ public class ImageDisplay extends JFrame {
             } else if (e.getActionCommand().equals("Gradient")) {
                 matrix = ImageUtils.gradient(matrix);
                 ImageUtils.showStats(matrix);
+            } else if (e.getActionCommand().equals("Process")) {
+                matrix = ImageUtils.denoise(matrix);
+                matrix = ImageUtils.correctSlant(matrix);
+                ImageUtils.smooth(matrix);
+                matrix.binarize();
+                matrix = ImageUtils.normalize(matrix,
+                        Integer.parseInt(StringUtils.defaultString(normPlane.getText(), "16")));
+                matrix = ImageUtils.thinning(matrix);
+                endPoints = ImageUtils.findEndpoints(matrix);
+                crossings = ImageUtils.findCrossings(matrix);
+                ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Stats")) {
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Undo")) {
 
-                if ( !stack.empty()) {
+                if (!stack.empty()) {
                     matrix = stack.pop();
                     matrix.print();
                 }
@@ -215,9 +233,15 @@ public class ImageDisplay extends JFrame {
                         }
                     }
                 }
-                if ( endPoints != null ) {
+                if (endPoints != null) {
                     g.setColor(Color.RED);
                     for (Point p : endPoints) {
+                        g2.fill(new Ellipse2D.Double(p.x * zoom, p.y * zoom, zoom, zoom));
+                    }
+                }
+                if (crossings != null) {
+                    g.setColor(Color.GREEN);
+                    for (Point p : crossings) {
                         g2.fill(new Ellipse2D.Double(p.x * zoom, p.y * zoom, zoom, zoom));
                     }
                 }

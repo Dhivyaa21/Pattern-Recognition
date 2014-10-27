@@ -37,7 +37,7 @@ public class Denoise {
         smoothed.removeBorder(1);
 
         System.out.println("total passes: " + pass);
-        smoothed.setName("binarySmooth." + matrix.getName());
+        smoothed.setName("denoise." + matrix.getName());
 
         return smoothed;
     }
