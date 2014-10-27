@@ -6,9 +6,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
-import java.util.Stack;
+import java.util.*;
+import java.util.List;
 
 
 public class ImageDisplay extends JFrame {
@@ -111,7 +113,10 @@ public class ImageDisplay extends JFrame {
 
     private class DrawPanel extends JPanel implements ActionListener {
 
+        private List<Point> endPoints;
+
         public void actionPerformed(ActionEvent e) {
+            endPoints = null;
 
             if ( matrix != null && !e.getActionCommand().equals("Undo")) {
                 stack.push(matrix.clone());
@@ -171,6 +176,7 @@ public class ImageDisplay extends JFrame {
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Thin")) {
                 matrix = ImageUtils.thinning(matrix);
+                endPoints = ImageUtils.findEndpoints(matrix);
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Deslant")) {
                 matrix = ImageUtils.correctSlant(matrix);
@@ -207,6 +213,12 @@ public class ImageDisplay extends JFrame {
                         if (m[y][x] != 0) {
                             g2.fill(new Rectangle2D.Double(x * zoom, y * zoom, zoom, zoom));
                         }
+                    }
+                }
+                if ( endPoints != null ) {
+                    g.setColor(Color.RED);
+                    for (Point p : endPoints) {
+                        g2.fill(new Ellipse2D.Double(p.x * zoom, p.y * zoom, zoom, zoom));
                     }
                 }
             }

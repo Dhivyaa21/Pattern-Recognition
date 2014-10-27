@@ -16,6 +16,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import javax.swing.*;
 import java.awt.*;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by joao on 2014-09-11.
@@ -708,5 +710,21 @@ public class ImageUtils {
                 frame.getContentPane().add(cp);
             }
         });
+    }
+
+    public static List<Point> findEndpoints(MyMatrix matrix) {
+
+        ArrayList<Point> list = new ArrayList<Point>();
+
+        double[][] m = matrix.getMatrix();
+        for (int y = 0; y < matrix.numRows(); y++) {
+            for (int x = 0; x < matrix.numCols(); x++) {
+                if ( m[y][x] == 1 && calculateB(calculatePs(m, x, y)) == 1 ) {
+                    list.add(new Point(x,y));
+                }
+            }
+        }
+
+        return list;
     }
 }
