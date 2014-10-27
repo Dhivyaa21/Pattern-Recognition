@@ -728,6 +728,24 @@ public class ImageUtils {
         return list;
     }
 
+    public static List<Point> findBranches(MyMatrix matrix) {
+
+        ArrayList<Point> list = new ArrayList<Point>();
+
+        double[][] m = matrix.getMatrix();
+        for (int y = 0; y < matrix.numRows(); y++) {
+            for (int x = 0; x < matrix.numCols(); x++) {
+                if (m[y][x] == 1) {
+                    if (calculateA(calculatePs(m, x, y)) == 3) {
+                        list.add(new Point(x, y));
+                    }
+                }
+            }
+        }
+
+        return list;
+    }
+
     public static List<Point> findCrossings(MyMatrix matrix) {
 
         ArrayList<Point> list = new ArrayList<Point>();
@@ -736,8 +754,7 @@ public class ImageUtils {
         for (int y = 0; y < matrix.numRows(); y++) {
             for (int x = 0; x < matrix.numCols(); x++) {
                 if (m[y][x] == 1) {
-                    int a = calculateA(calculatePs(m, x, y));
-                    if (3 <= a && a <= 4) {
+                    if (calculateA(calculatePs(m, x, y)) == 4) {
                         list.add(new Point(x, y));
                     }
                 }

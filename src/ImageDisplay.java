@@ -61,6 +61,7 @@ public class ImageDisplay extends JFrame {
         load = new JButton("Load");
         prev = new JButton("Prev");
         next = new JButton("Next");
+        process = new JButton("Process");
         invert = new JButton("Invert");
         normalize = new JButton("Normalize");
         normPlane = new JTextField("16", 3);
@@ -70,7 +71,6 @@ public class ImageDisplay extends JFrame {
         smooth = new JButton("Smooth");
         thin = new JButton("Thin");
         gradient = new JButton("Gradient");
-        process = new JButton("Process");
         stats = new JButton("Stats");
         undo = new JButton("Undo");
 
@@ -79,6 +79,7 @@ public class ImageDisplay extends JFrame {
         binarize.addActionListener(panel);
         prev.addActionListener(panel);
         next.addActionListener(panel);
+        process.addActionListener(panel);
         normalize.addActionListener(panel);
         invert.addActionListener(panel);
         denoise.addActionListener(panel);
@@ -86,7 +87,6 @@ public class ImageDisplay extends JFrame {
         smooth.addActionListener(panel);
         thin.addActionListener(panel);
         gradient.addActionListener(panel);
-        process.addActionListener(panel);
         stats.addActionListener(panel);
         undo.addActionListener(panel);
 
@@ -96,6 +96,7 @@ public class ImageDisplay extends JFrame {
         upperPanel.add(load);
         upperPanel.add(prev);
         upperPanel.add(next);
+        upperPanel.add(process);
         upperPanel.add(binarize);
         upperPanel.add(invert);
         upperPanel.add(normalize);
@@ -105,7 +106,6 @@ public class ImageDisplay extends JFrame {
         upperPanel.add(smooth);
         upperPanel.add(thin);
         upperPanel.add(gradient);
-        upperPanel.add(process);
         upperPanel.add(stats);
         upperPanel.add(undo);
 
@@ -119,10 +119,10 @@ public class ImageDisplay extends JFrame {
 
         private List<Point> endPoints;
         private List<Point> crossings;
+        private List<Point> branchPoints;
 
         public void actionPerformed(ActionEvent e) {
-            endPoints = null;
-            crossings = null;
+            endPoints = branchPoints = crossings = null;
 
             if (matrix != null && !e.getActionCommand().equals("Undo")) {
                 stack.push(matrix.clone());
@@ -183,6 +183,7 @@ public class ImageDisplay extends JFrame {
             } else if (e.getActionCommand().equals("Thin")) {
                 matrix = ImageUtils.thinning(matrix);
                 endPoints = ImageUtils.findEndpoints(matrix);
+                branchPoints = ImageUtils.findBranches(matrix);
                 crossings = ImageUtils.findCrossings(matrix);
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Deslant")) {
@@ -200,6 +201,7 @@ public class ImageDisplay extends JFrame {
                         Integer.parseInt(StringUtils.defaultString(normPlane.getText(), "16")));
                 matrix = ImageUtils.thinning(matrix);
                 endPoints = ImageUtils.findEndpoints(matrix);
+                branchPoints = ImageUtils.findBranches(matrix);
                 crossings = ImageUtils.findCrossings(matrix);
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Stats")) {
@@ -221,7 +223,7 @@ public class ImageDisplay extends JFrame {
             setBackground(Color.WHITE);
             g.setColor(Color.WHITE);
             g2.fill(new Rectangle2D.Double(0, 0, 600, 400));
-            g.setColor(Color.BLACK);
+            g.setColor(Color.GRAY);
 
             int zoom = 4;
             if (matrix != null) {
@@ -236,6 +238,12 @@ public class ImageDisplay extends JFrame {
                 if (endPoints != null) {
                     g.setColor(Color.RED);
                     for (Point p : endPoints) {
+                        g2.fill(new Ellipse2D.Double(p.x * zoom, p.y * zoom, zoom, zoom));
+                    }
+                }
+                if (branchPoints != null) {
+                    g.setColor(Color.YELLOW);
+                    for (Point p : branchPoints) {
                         g2.fill(new Ellipse2D.Double(p.x * zoom, p.y * zoom, zoom, zoom));
                     }
                 }
