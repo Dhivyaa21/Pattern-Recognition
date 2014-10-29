@@ -29,6 +29,8 @@ public class ImageDisplay extends JFrame {
     private final JButton stats;
     private final JTextField normPlane;
     private final JButton process;
+    private final JButton fill4;
+    private final JButton fill8;
     JButton load;
 
     Stack<MyMatrix> stack = new Stack<>();
@@ -69,6 +71,8 @@ public class ImageDisplay extends JFrame {
         denoise = new JButton("Denoise");
         deslant = new JButton("Deslant");
         smooth = new JButton("Smooth");
+        fill4 = new JButton("Fill4");
+        fill8 = new JButton("Fill8");
         thin = new JButton("Thin");
         gradient = new JButton("Gradient");
         stats = new JButton("Stats");
@@ -85,6 +89,8 @@ public class ImageDisplay extends JFrame {
         denoise.addActionListener(panel);
         deslant.addActionListener(panel);
         smooth.addActionListener(panel);
+        fill4.addActionListener(panel);
+        fill8.addActionListener(panel);
         thin.addActionListener(panel);
         gradient.addActionListener(panel);
         stats.addActionListener(panel);
@@ -104,6 +110,8 @@ public class ImageDisplay extends JFrame {
         upperPanel.add(denoise);
         upperPanel.add(deslant);
         upperPanel.add(smooth);
+        upperPanel.add(fill4);
+        upperPanel.add(fill8);
         upperPanel.add(thin);
         upperPanel.add(gradient);
         upperPanel.add(stats);
@@ -185,6 +193,12 @@ public class ImageDisplay extends JFrame {
                 endPoints = ImageUtils.findEndpoints(matrix);
                 branchPoints = ImageUtils.findBranches(matrix);
                 crossings = ImageUtils.findCrossings(matrix);
+                ImageUtils.showStats(matrix);
+            } else if (e.getActionCommand().equals("Fill4")) {
+                matrix = ImageUtils.fill4(matrix);
+                ImageUtils.showStats(matrix);
+            } else if (e.getActionCommand().equals("Fill8")) {
+                matrix = ImageUtils.fill8(matrix);
                 ImageUtils.showStats(matrix);
             } else if (e.getActionCommand().equals("Deslant")) {
                 matrix = ImageUtils.correctSlant(matrix);
