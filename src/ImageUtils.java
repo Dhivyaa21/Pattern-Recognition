@@ -717,8 +717,8 @@ public class ImageUtils {
         ArrayList<Point> list = new ArrayList<Point>();
 
         double[][] m = matrix.getMatrix();
-        for (int y = 1; y < matrix.numRows() - 1; y++) {
-            for (int x = 1; x < matrix.numCols() - 1; x++) {
+        for (int y = 0; y < matrix.numRows(); y++) {
+            for (int x = 0; x < matrix.numCols(); x++) {
                 if (m[y][x] == 1 && calculateB(calculatePs(m, x, y)) == 1) {
                     list.add(new Point(x, y));
                 }
@@ -733,8 +733,8 @@ public class ImageUtils {
         ArrayList<Point> list = new ArrayList<Point>();
 
         double[][] m = matrix.getMatrix();
-        for (int y = 1; y < matrix.numRows() - 1; y++) {
-            for (int x = 1; x < matrix.numCols() - 1; x++) {
+        for (int y = 0; y < matrix.numRows(); y++) {
+            for (int x = 0; x < matrix.numCols(); x++) {
                 if (m[y][x] == 1) {
                     if (calculateA(calculatePs(m, x, y)) == 3) {
                         list.add(new Point(x, y));
@@ -751,8 +751,8 @@ public class ImageUtils {
         ArrayList<Point> list = new ArrayList<Point>();
 
         double[][] m = matrix.getMatrix();
-        for (int y = 1; y < matrix.numRows() - 1; y++) {
-            for (int x = 1; x < matrix.numCols() - 1; x++) {
+        for (int y = 0; y < matrix.numRows(); y++) {
+            for (int x = 0; x < matrix.numCols(); x++) {
                 if (m[y][x] == 1) {
                     if (calculateA(calculatePs(m, x, y)) == 4) {
                         list.add(new Point(x, y));
@@ -762,91 +762,5 @@ public class ImageUtils {
         }
 
         return list;
-    }
-
-    public static MyMatrix fill4(MyMatrix matrix) {
-
-        MyMatrix filled = matrix.clone();
-        double[][] to = filled.getMatrix();
-        double[][] from = copyOf(to);
-        boolean modified;
-
-        do {
-            modified = false;
-
-            for (int y = 1; y < matrix.numRows() - 1; y++) {
-                for (int x = 1; x < matrix.numCols() - 1; x++) {
-
-                    int has4 = has4Neighbours(calculatePs(from, x, y)) ? 1 : 0;
-                    if (from[y][x] != has4) {
-                        to[y][x] = has4;    //  change pixel
-                        modified = true;
-                    }
-                }
-            }
-
-            from = copyOf(to);
-
-        } while (modified);
-
-        filled.matrix = to;
-
-        filled.setName("fill4." + matrix.getName());
-
-        if (printAfterOperation) {
-            filled.print();
-        }
-
-        return filled;
-    }
-
-    private static boolean has4Neighbours(int[] p) {
-        return p[1] == 1 ||
-                (p[2] * p[6] == 1) && (p[8] == 1 || p[4] == 1) ||
-                (p[8] * p[4] == 1) && (p[2] == 1 || p[6] == 1);
-    }
-
-    public static MyMatrix fill8(MyMatrix matrix) {
-
-        MyMatrix filled = matrix.clone();
-        double[][] to = filled.getMatrix();
-        double[][] from = copyOf(to);
-        boolean modified;
-
-        do {
-            modified = false;
-
-            for (int y = 1; y < matrix.numRows() - 1; y++) {
-                for (int x = 1; x < matrix.numCols() - 1; x++) {
-
-                    int has4 = has8Neighbours(calculatePs(from, x, y)) ? 1 : 0;
-                    if (from[y][x] != has4) {
-                        to[y][x] = has4;    //  change pixel
-                        modified = true;
-                    }
-                }
-            }
-
-            from = copyOf(to);
-
-        } while (modified);
-
-        filled.matrix = to;
-
-        filled.setName("fill8." + matrix.getName());
-
-        if (printAfterOperation) {
-            filled.print();
-        }
-
-        return filled;
-    }
-
-    private static boolean has8Neighbours(int[] p) {
-        return (p[1] == 1) ||
-                (p[9] * p[5] == 1) ||
-                (p[2] * p[6] == 1) ||
-                (p[3] * p[7] == 1) ||
-                (p[8] * p[4] == 1);
     }
 }
