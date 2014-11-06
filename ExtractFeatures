@@ -1,0 +1,210 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Scanner;
+
+
+public class ExtractFeatures {
+	
+	private static void saveImg(int[][] image, int rowsize, int colsize, String filename) {
+		// TODO Auto-generated method stub
+		PrintStream ps;
+		String line = null;
+		String s =null;
+		try {
+		ps = new PrintStream(new FileOutputStream(filename));
+		for(int row=0;row < rowsize;row++){
+			for(int col=0;col < colsize;col++){
+				if (String.valueOf(image[row][col]) != null) {
+			//	if (image[row][col] == 0) {
+			//		s = " ";
+			//	}
+			//	else
+				s = String.valueOf(image[row][col]);
+				if (col == 0)
+					line = s;
+				else
+				    line = line + s;
+				}
+			}
+			ps.println(line);
+			System.out.println(line);
+		}
+		ps.close();
+		} catch (FileNotFoundException e) {
+		System.out.println(e.getMessage());
+		}
+		
+	}
+	
+	public static int[][] normalize (int[][] matrix) {
+		
+		int [][] normalized = new int[40][40];
+		int width = matrix[0].length;
+		int height = matrix.length;
+		
+		System.out.println("width " + width + " length " + height);
+		double a = 40.0/width;
+		double b = 40.0/height;
+		
+		for (int i=0;i<40;i++) {
+			for (int j=0;j<40;j++) {
+				int k = (int)(i/b);
+				int l = (int)(j/a);
+				System.out.println("i " + i + " j " + j);
+				System.out.println("k " + k + " l " + l);
+				//if (k>=matrix.length || l>=matrix[0].length){
+				//	k=0;l=0;
+				//}
+				normalized[i][j] = matrix[k][l];
+			}
+		}
+		
+		return normalized;
+	}
+	
+	public static void readSubMatrix(int[][] normalizedImage) {
+		System.out.println(normalizedImage.length + " " + normalizedImage[0].length);
+		for (int i=0;i<normalizedImage.length;i+=10) {
+			for (int j=0;j<normalizedImage[0].length;j+=10) {
+				System.out.println("i " + i);
+				System.out.println("j " + j);
+				getSubMatrix(i,j,normalizedImage);
+			}
+		}
+		
+	}
+	
+	public static void getSubMatrix(int i, int j, int[][] image) {
+		List<Integer> subImage = new ArrayList<Integer>();
+		for (int k=i;k<10;k++) {
+			for(int l=j;l<10;l++) {
+				System.out.println("i am in 1");
+				//System.out.println("j " + j);
+				subImage.add(image[k][l]);
+			}
+		}
+		getdiagonalFeatures(subImage);
+		subImage.clear();
+
+	}
+
+	public static void getdiagonalFeatures(List<Integer> image){
+		Iterator<Integer> im = image.iterator();
+		List<Integer> sumVal = new ArrayList<Integer>();
+		int[][] m = new int[10][10];
+		int y=0;
+		int x=0;
+		for(int p=0;p<10;p++) {
+			for(int q=0;q<10;q++) {
+				if(im.hasNext())
+				m[p][q] = im.next();
+				//else System.out.println("There are no elements");
+			}
+		}
+		
+		for (x=0;x<m[0].length;x++) {
+			sumVal.add(addDiagonals(x,y,m));			
+		}
+		
+		if(x==10) {
+			x=0;
+			for (y=0;y<m.length;y++) {
+				sumVal.add(addDiagonals(x,y,m));
+			}
+		}
+		
+		for (int i=0;i<sumVal.size();i++) {
+			System.out.println("sum of diagonal " + i + " " + sumVal.get(i));
+		}
+		
+		sumVal.clear();
+		
+	}
+	
+private static int addDiagonals(int x, int y, int[][] m) {
+		// TODO Auto-generated method stub
+	    int sum=0;
+	    for (int a=1;a<x-9;a++) {
+	    	System.out.println(x + " " + y + " " + a + "\n");
+	    	if (a==1) {
+	     	sum = m[x][y] + m[x+a][y+a];
+	    	}
+	    	else sum = sum + m[x+a][y+a];
+	    }
+		return sum;
+	}
+
+public static void main(String[] args) throws IOException {
+		
+		List<String> lines = new ArrayList<>();
+		String pr = null;
+		String input = "pattern";
+		Scanner sc = new Scanner(new File("Pattern1.txt"));
+		while(sc.hasNextLine()) {
+		    lines.add(sc.nextLine());
+		}
+
+		// to array
+		int rows = lines.size();             
+		int cols = 0;                        
+		for(String line : lines) {
+		    cols = Math.max(cols, line.length());
+		}
+		int[][] Image = new int[rows][cols];  
+		int i = 0;
+		for(String line : lines) {           
+		    char[] chars = line.toCharArray();
+		    for(int j = 0 ; j < chars.length ; ++j) {
+		        if(chars[j] == '1') {
+		            Image[i][j] = 1;
+		        }
+		    }
+		    i++;
+		}
+		
+		int[][] a = new int[Image.length][Image[0].length];
+		a = normalize(Image);
+		saveImg(a,a.length,a[0].length,"C:/Users/Dhivyaa/Desktop/Normalize.txt");
+		
+		/**************************************************
+		 * Fill the image
+		 */
+		int [][] b = new int[a.length][a[0].length];
+		Filling f = new Filling();
+		for(int x=0;x<2;x++)
+		b = f.FillImage(a);
+		saveImg(b,b.length,b[0].length,"C:/Users/Dhivyaa/Desktop/Fill.txt");
+		
+		/**************************************************
+		 * Smooth the image
+		 */
+		GrayScaleSmoothing gsm = new GrayScaleSmoothing();
+		int [][] c = new int[a.length][a[0].length];
+		c = gsm.smoothenImg(b);
+		saveImg(c,c.length,c[0].length,"C:/Users/Dhivyaa/Desktop/Smooth.txt");
+		
+		/**************************************************
+		 * Thin the image
+		 */
+		ZhangSuenThinning zst = new ZhangSuenThinning();
+		int[][] d = new int[a.length][a[0].length];
+		d = zst.doThinning(c);
+		saveImg(d,d.length,d[0].length,"C:/Users/Dhivyaa/Desktop/Thin.txt");
+		
+		/**************************************************
+		 * get the diagonal features of the matrix
+		 */
+		readSubMatrix(d);
+		
+		
+		
+		
+}
+
+}
