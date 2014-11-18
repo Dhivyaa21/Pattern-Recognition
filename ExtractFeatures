@@ -11,6 +11,8 @@ import java.util.Scanner;
 
 public class ExtractFeatures {
 	
+	static List<Double> avg = new ArrayList<Double>();
+	
 	private static void saveImg(int[][] image, int rowsize, int colsize, String filename) {
 		// TODO Auto-generated method stub
 		PrintStream ps;
@@ -42,6 +44,7 @@ public class ExtractFeatures {
 		
 	}
 	
+	//Normalize the matrix to 40X40
 	public static int[][] normalize (int[][] matrix) {
 		
 		int [][] normalized = new int[40][40];
@@ -56,11 +59,6 @@ public class ExtractFeatures {
 			for (int j=0;j<40;j++) {
 				int k = (int)(i/b);
 				int l = (int)(j/a);
-				System.out.println("i " + i + " j " + j);
-				System.out.println("k " + k + " l " + l);
-				//if (k>=matrix.length || l>=matrix[0].length){
-				//	k=0;l=0;
-				//}
 				normalized[i][j] = matrix[k][l];
 			}
 		}
@@ -68,24 +66,21 @@ public class ExtractFeatures {
 		return normalized;
 	}
 	
+	//Read the 10X10 Zones of the image
 	public static void readSubMatrix(int[][] normalizedImage) {
-		System.out.println(normalizedImage.length + " " + normalizedImage[0].length);
 		for (int i=0;i<normalizedImage.length;i+=10) {
 			for (int j=0;j<normalizedImage[0].length;j+=10) {
-				System.out.println("i " + i);
-				System.out.println("j " + j);
 				getSubMatrix(i,j,normalizedImage);
 			}
 		}
 		
 	}
 	
+	
 	public static void getSubMatrix(int i, int j, int[][] image) {
 		List<Integer> subImage = new ArrayList<Integer>();
-		for (int k=i;k<10;k++) {
-			for(int l=j;l<10;l++) {
-				System.out.println("i am in 1");
-				//System.out.println("j " + j);
+		for (int k=i;k<i+10;k++) {
+			for(int l=j;l<j+10;l++) {
 				subImage.add(image[k][l]);
 			}
 		}
@@ -94,58 +89,82 @@ public class ExtractFeatures {
 
 	}
 
+	//get the sum of the 19 diagonals
 	public static void getdiagonalFeatures(List<Integer> image){
 		Iterator<Integer> im = image.iterator();
 		List<Integer> sumVal = new ArrayList<Integer>();
 		int[][] m = new int[10][10];
 		int y=0;
 		int x=0;
+		int zoneSum = 0; 
 		for(int p=0;p<10;p++) {
 			for(int q=0;q<10;q++) {
-				if(im.hasNext())
+				if(im.hasNext()){
 				m[p][q] = im.next();
-				//else System.out.println("There are no elements");
+				}
 			}
 		}
 		
-		for (x=0;x<m[0].length;x++) {
+		for (x=0;x<10;x++) {
 			sumVal.add(addDiagonals(x,y,m));			
 		}
 		
 		if(x==10) {
 			x=0;
-			for (y=0;y<m.length;y++) {
+			for (y=1;y<m.length;y++) {
 				sumVal.add(addDiagonals(x,y,m));
 			}
 		}
 		
 		for (int i=0;i<sumVal.size();i++) {
-			System.out.println("sum of diagonal " + i + " " + sumVal.get(i));
+			//System.out.println("sum of diagonal " + i + " " + sumVal.get(i));
+			zoneSum = zoneSum + sumVal.get(i);
 		}
 		
+		
+		avg.add(getZoneSum(sumVal));
 		sumVal.clear();
 		
 	}
+
+// sum of all the 19 diagoals to get a final sum.
+private static double getZoneSum(List<Integer> a) {
 	
+	double zoneSum = 0.0;
+	for (int d=0;d<a.size();d++) {
+		zoneSum = zoneSum + (double)(a.get(d));
+	}
+		// TODO Auto-generated method stub
+		return zoneSum;
+	}
+
 private static int addDiagonals(int x, int y, int[][] m) {
 		// TODO Auto-generated method stub
 	    int sum=0;
-	    for (int a=1;a<x-9;a++) {
-	    	System.out.println(x + " " + y + " " + a + "\n");
-	    	if (a==1) {
-	     	sum = m[x][y] + m[x+a][y+a];
-	    	}
-	    	else sum = sum + m[x+a][y+a];
+	    int inc = 0;
+	    if (x==0) inc = y;
+	    else inc = x;
+	    for (int a=0;a<10-inc;a++) {
+	    	//System.out.println(x + " " + y);
+	        sum = sum + m[x+a][y+a];
 	    }
 		return sum;
 	}
+
+private static void getZoneFeature(List<Double> avg) {
+	// TODO Auto-generated method stub
+	for (int i=0;i<avg.size();i++) {
+		System.out.println("Zone " + i + "-" + avg.get(i));
+	}
+	
+}
 
 public static void main(String[] args) throws IOException {
 		
 		List<String> lines = new ArrayList<>();
 		String pr = null;
 		String input = "pattern";
-		Scanner sc = new Scanner(new File("Pattern1.txt"));
+		Scanner sc = new Scanner(new File("ThinnedImage_8.txt"));
 		while(sc.hasNextLine()) {
 		    lines.add(sc.nextLine());
 		}
@@ -161,50 +180,52 @@ public static void main(String[] args) throws IOException {
 		for(String line : lines) {           
 		    char[] chars = line.toCharArray();
 		    for(int j = 0 ; j < chars.length ; ++j) {
-		        if(chars[j] == '1') {
-		            Image[i][j] = 1;
-		        }
+		        if(chars[j] == '1') 
+		            Image[i][j] = 0;
+		            else Image[i][j] = 1;
 		    }
 		    i++;
 		}
 		
-		int[][] a = new int[Image.length][Image[0].length];
-		a = normalize(Image);
-		saveImg(a,a.length,a[0].length,"C:/Users/Dhivyaa/Desktop/Normalize.txt");
+		//int[][] a = new int[Image.length][Image[0].length];
+		//a = normalize(Image);
+		//saveImg(a,a.length,a[0].length,"C:/Users/Dhivyaa/Desktop/Normalize.txt");
+	
 		
 		/**************************************************
 		 * Fill the image
 		 */
-		int [][] b = new int[a.length][a[0].length];
-		Filling f = new Filling();
-		for(int x=0;x<2;x++)
-		b = f.FillImage(a);
-		saveImg(b,b.length,b[0].length,"C:/Users/Dhivyaa/Desktop/Fill.txt");
+		//int [][] b = new int[a.length][a[0].length];
+		//Filling f = new Filling();
+		//for(int x=0;x<2;x++)
+		//b = f.FillImage(a);
+		//saveImg(b,b.length,b[0].length,"C:/Users/Dhivyaa/Desktop/Fill.txt");
 		
 		/**************************************************
 		 * Smooth the image
 		 */
-		GrayScaleSmoothing gsm = new GrayScaleSmoothing();
-		int [][] c = new int[a.length][a[0].length];
-		c = gsm.smoothenImg(b);
-		saveImg(c,c.length,c[0].length,"C:/Users/Dhivyaa/Desktop/Smooth.txt");
+		//GrayScaleSmoothing gsm = new GrayScaleSmoothing();
+		//int [][] c = new int[a.length][a[0].length];
+		//c = gsm.smoothenImg(b);
+		//saveImg(c,c.length,c[0].length,"C:/Users/Dhivyaa/Desktop/Smooth.txt");
+	
 		
 		/**************************************************
 		 * Thin the image
 		 */
-		ZhangSuenThinning zst = new ZhangSuenThinning();
-		int[][] d = new int[a.length][a[0].length];
-		d = zst.doThinning(c);
-		saveImg(d,d.length,d[0].length,"C:/Users/Dhivyaa/Desktop/Thin.txt");
+		//ZhangSuenThinning zst = new ZhangSuenThinning();
+		//int[][] d = new int[a.length][a[0].length];
+		//d = zst.doThinning(a);
+		//saveImg(d,d.length,d[0].length,"C:/Users/Dhivyaa/Desktop/Thin.txt");
 		
 		/**************************************************
 		 * get the diagonal features of the matrix
 		 */
-		readSubMatrix(d);
+		readSubMatrix(Image);
+		getZoneFeature(avg);
 		
 		
 		
 		
 }
-
 }
